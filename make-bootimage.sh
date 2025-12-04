@@ -65,6 +65,15 @@ EOF
     fi
 fi
 
+if [ -e "$RECOVERY_RAMDISK" ] && [ -n "$deviceinfo_bootimg_has_init_boot_partition" ] && [ "$deviceinfo_bootimg_has_init_boot_partition" == "true" ]; then
+    mkdir -p "$TMPDOWN/recovery-ramdisk-fragment"
+    cp "$RECOVERY_RAMDISK" "$TMPDOWN/recovery-ramdisk-fragment/ramdisk-recovery.img"
+
+    cd "$TMPDOWN/recovery-ramdisk-fragment"
+    find . | cpio -o -H newc | $COMPRESSION_CMD > "$RECOVERY_RAMDISK-fragment"
+    RECOVERY_RAMDISK="$RECOVERY_RAMDISK-fragment"
+fi
+
 if [ "$deviceinfo_ramdisk_compression" != "gzip" ]; then
     gzip -dc "$RAMDISK" | $COMPRESSION_CMD > "${RAMDISK}.${deviceinfo_ramdisk_compression}"
     RAMDISK="${RAMDISK}.${deviceinfo_ramdisk_compression}"
@@ -229,6 +238,10 @@ else
             VENDOR_RAMDISK_ARGS=(--vendor_ramdisk "$VENDOR_RAMDISK")
         else
             VENDOR_RAMDISK_ARGS=(--ramdisk_type platform --ramdisk_name '' --vendor_ramdisk_fragment "$VENDOR_RAMDISK")
+
+            if [ -e "$RECOVERY_RAMDISK" ] && [ -n "$deviceinfo_bootimg_has_init_boot_partition" ] && [ "$deviceinfo_bootimg_has_init_boot_partition" == "true" ]; then
+                VENDOR_RAMDISK_ARGS+=(--ramdisk_type recovery --ramdisk_name 'recovery' --vendor_ramdisk_fragment "$RECOVERY_RAMDISK")
+	    fi
         fi
         "$MKBOOTIMG" "${VENDOR_RAMDISK_ARGS[@]}" --vendor_cmdline "$deviceinfo_kernel_cmdline" --header_version $deviceinfo_bootimg_header_version --vendor_boot "$(dirname "$OUT")/vendor_$(basename "$OUT")" $EXTRA_VENDOR_ARGS
     fi
