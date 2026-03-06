@@ -190,11 +190,15 @@ deviceinfo_ramdisk_compression="gzip"
 
 ## Recovery
 
+# Whether to use unified UBports recovery-ramdisk.img artifact from CI
+deviceinfo_use_unified_recovery="true"
+
 # Whether a recovery.img should be generated or not
 #
 # Note: Setting this also requires a separate recovery ramdisk to exist at:
 #  - ./ramdisk-recovery.img
 #  - ./ramdisk-overlay/ramdisk-recovery.img
+# Or alternatively also adding deviceinfo_use_unified_recovery="true"
 #
 # It is possible to overlay (replace) files of the ramdisk with files placed into:
 #  - ./ramdisk-recovery-overlay/

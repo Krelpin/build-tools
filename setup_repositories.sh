@@ -227,11 +227,36 @@ setup_ramdisk() {
     fi
 }
 
+setup_recovery_ramdisk() {
+    if [ -z "$deviceinfo_use_unified_recovery" ] || ! $deviceinfo_use_unified_recovery; then
+        return
+    fi
+
+    if [ "$RAMDISK_ARCH" != "arm64" ]; then
+	print_error "Unified UBports recovery ramdisk has no $RAMDISK_ARCH build"
+	exit 1
+    fi
+
+    if [[ -f "$HERE/ramdisk-recovery.img" || -f "$HERE/ramdisk-overlay/ramdisk-recovery.img" ]]; then
+	print_error "Remove other ramdisk-recovery.img files from your port tree to use unified UBports recovery ramdisk"
+	exit 1
+    fi
+
+    if [ -f ramdisk-recovery.img ]; then
+        print_info "ramdisk-recovery.img - already exists, skipping download"
+	return
+    fi
+
+    print_header "Setting up unified UBports recovery ramdisk"
+    curl --location --output ramdisk-recovery.img "https://ci.ubports.com/job/UBportsCommunityPortsJenkinsCI/job/ubports%2Fporting%2Fcommunity-ports%2Fjenkins-ci%2Fgeneric_arm64/job/halium-14.0/lastSuccessfulBuild/artifact/ramdisk-recovery.img"
+}
+
 cd "$TMPDOWN"
     setup_gcc
     setup_clang
     setup_tooling
     setup_ramdisk
+    setup_recovery_ramdisk
     setup_kernel
 
     ls .
