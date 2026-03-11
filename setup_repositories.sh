@@ -242,12 +242,17 @@ setup_recovery_ramdisk() {
 	exit 1
     fi
 
+    print_header "Setting up unified UBports recovery ramdisk"
+
+    if [[ -n "$deviceinfo_unified_recovery_ui_density" && "$deviceinfo_unified_recovery_ui_density" != "mdpi" ]]; then
+        clone_if_not_existing "https://github.com/ubports/halium_bootable_recovery" "halium-14.0"
+    fi
+
     if [ -f ramdisk-recovery.img ]; then
         print_info "ramdisk-recovery.img - already exists, skipping download"
 	return
     fi
 
-    print_header "Setting up unified UBports recovery ramdisk"
     curl --location --output ramdisk-recovery.img "https://ci.ubports.com/job/UBportsCommunityPortsJenkinsCI/job/ubports%2Fporting%2Fcommunity-ports%2Fjenkins-ci%2Fgeneric_arm64/job/halium-14.0/lastSuccessfulBuild/artifact/ramdisk-recovery.img"
 }
 

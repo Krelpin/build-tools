@@ -193,6 +193,14 @@ deviceinfo_ramdisk_compression="gzip"
 # Whether to use unified UBports recovery-ramdisk.img artifact from CI
 deviceinfo_use_unified_recovery="true"
 
+# Size of UBports recovery UI elements, mdpi comes with recovery-ramdisk.img as default. Android-recommended values:
+# - ~160 PPI -> mdpi
+# - ~240 PPI -> hdpi
+# - ~320 PPI -> xhdpi
+# - ~480 PPI -> xxhdpi
+# - ~640 PPI -> xxxhdpi
+deviceinfo_unified_recovery_ui_density="mdpi"
+
 # Whether a recovery.img should be generated or not
 #
 # Note: Setting this also requires a separate recovery ramdisk to exist at:
