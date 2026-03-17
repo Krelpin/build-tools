@@ -73,7 +73,7 @@ EOF
     fi
 fi
 
-if [ -e "$RECOVERY_RAMDISK" ] && [ -n "$deviceinfo_bootimg_has_init_boot_partition" ] && [ "$deviceinfo_bootimg_has_init_boot_partition" == "true" ]; then
+if [ -e "$RECOVERY_RAMDISK" ] && ([ "$deviceinfo_bootimg_has_init_boot_partition" = "true" ] || ([ "$deviceinfo_use_unified_recovery" = "true" ] && [ "${deviceinfo_has_recovery_partition:-false}" = "false" ])); then
     mkdir -p "$TMPDOWN/recovery-ramdisk-fragment"
     cp "$RECOVERY_RAMDISK" "$TMPDOWN/recovery-ramdisk-fragment/ramdisk-recovery.img"
 
@@ -97,6 +97,12 @@ if [ -d "$HERE/ramdisk-overlay" ]; then
     if [ -f "$HERE/ramdisk-overlay/ramdisk-recovery.img" ] && [ -f "$TMPDOWN/ramdisk-recovery.img-original" ]; then
         mv "$TMPDOWN/ramdisk-recovery.img-original" "$HERE/ramdisk-overlay/ramdisk-recovery.img"
     fi
+fi
+
+if [ -e "$RECOVERY_RAMDISK" ] && [ "$deviceinfo_use_unified_recovery" = "true" ] && [ "${deviceinfo_has_recovery_partition:-false}" = "false" ] && [ "${deviceinfo_bootimg_has_init_boot_partition:-false}" = "false" ]; then
+    cp "$RAMDISK" "${RAMDISK}-recovery"
+    RAMDISK="${RAMDISK}-recovery"
+    cat "$RECOVERY_RAMDISK" >> "$RAMDISK"
 fi
 
 # Create ramdisk for vendor_boot.img
