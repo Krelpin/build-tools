@@ -209,12 +209,14 @@ fi
 MKBOOTIMG="$TMPDOWN/android_system_tools_mkbootimg/mkbootimg.py"
 EXTRA_ARGS=""
 EXTRA_VENDOR_ARGS=""
+EXTRA_VENDOR_KERNEL_ARGS=""
 INIT_BOOT_IMAGE=""
 
 if [ "$deviceinfo_bootimg_header_version" -le 2 ]; then
     EXTRA_ARGS+=" --base $deviceinfo_flash_offset_base --kernel_offset $deviceinfo_flash_offset_kernel --ramdisk_offset $deviceinfo_flash_offset_ramdisk --second_offset $deviceinfo_flash_offset_second --tags_offset $deviceinfo_flash_offset_tags --pagesize $deviceinfo_flash_pagesize"
 else
-    EXTRA_VENDOR_ARGS+=" --base $deviceinfo_flash_offset_base --kernel_offset $deviceinfo_flash_offset_kernel --ramdisk_offset $deviceinfo_flash_offset_ramdisk --tags_offset $deviceinfo_flash_offset_tags --pagesize $deviceinfo_flash_pagesize --dtb $DTB --dtb_offset $deviceinfo_flash_offset_dtb"
+    EXTRA_VENDOR_ARGS+=" --base $deviceinfo_flash_offset_base --kernel_offset $deviceinfo_flash_offset_kernel --ramdisk_offset $deviceinfo_flash_offset_ramdisk --tags_offset $deviceinfo_flash_offset_tags --pagesize $deviceinfo_flash_pagesize --dtb_offset $deviceinfo_flash_offset_dtb"
+    EXTRA_VENDOR_KERNEL_ARGS+=" --dtb $DTB"
 fi
 
 if [ "$deviceinfo_bootimg_header_version" -eq 4 ]; then
@@ -246,17 +248,19 @@ else
         "$MKBOOTIMG" --kernel "$KERNEL" --ramdisk "$RAMDISK" --header_version $deviceinfo_bootimg_header_version -o "$OUT" --os_version $deviceinfo_bootimg_os_version --os_patch_level $deviceinfo_bootimg_os_patch_level $EXTRA_ARGS
     fi
 
+    VENDOR_RAMDISK_ARGS=()
     if [ -n "$VENDOR_RAMDISK" ]; then
-        VENDOR_RAMDISK_ARGS=()
         if [ "$deviceinfo_bootimg_header_version" -eq 3 ]; then
             VENDOR_RAMDISK_ARGS=(--vendor_ramdisk "$VENDOR_RAMDISK")
         else
             VENDOR_RAMDISK_ARGS=(--ramdisk_type platform --ramdisk_name '' --vendor_ramdisk_fragment "$VENDOR_RAMDISK")
-
-            if [ -e "$RECOVERY_RAMDISK" ] && [ -n "$deviceinfo_bootimg_has_init_boot_partition" ] && [ "$deviceinfo_bootimg_has_init_boot_partition" == "true" ]; then
-                VENDOR_RAMDISK_ARGS+=(--ramdisk_type recovery --ramdisk_name 'recovery' --vendor_ramdisk_fragment "$RECOVERY_RAMDISK")
-	    fi
         fi
+    fi
+    if [ -e "$RECOVERY_RAMDISK" ] && [ "$deviceinfo_bootimg_has_init_boot_partition" = "true" ]; then
+        VENDOR_RAMDISK_ARGS+=(--ramdisk_type recovery --ramdisk_name 'recovery' --vendor_ramdisk_fragment "$RECOVERY_RAMDISK")
+    fi
+    if [ ${#VENDOR_RAMDISK_ARGS[@]} -ge 1 ]; then
+        [ "$deviceinfo_bootimg_has_vendor_kernel_boot_partition" != "true" ] && VENDOR_RAMDISK_ARGS+=($EXTRA_VENDOR_KERNEL_ARGS)
         "$MKBOOTIMG" "${VENDOR_RAMDISK_ARGS[@]}" --vendor_cmdline "$deviceinfo_kernel_cmdline" --header_version $deviceinfo_bootimg_header_version --vendor_boot "$(dirname "$OUT")/vendor_$(basename "$OUT")" $EXTRA_VENDOR_ARGS
     fi
 fi

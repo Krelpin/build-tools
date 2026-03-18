@@ -147,6 +147,10 @@ deviceinfo_bootimg_has_init_boot_partition="false"
 # Size of the init_boot partition (defaults to 8 MiB when unset)
 deviceinfo_init_boot_partition_size="8388608"
 
+# Whether kernel related bits are split away to a separate vendor_kernel_boot.img from vendor_boot.img
+# Enable for devices launched with Android 13+ with a vendor_kernel_boot partition (mostly QCOM so far)
+deviceinfo_bootimg_has_vendor_kernel_boot_partition="false"
+
 ## DTB(O)
 
 # Whether to use dtc extension or not
