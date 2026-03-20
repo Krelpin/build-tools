@@ -81,4 +81,4 @@ chmod 755 "$dir/system"
 tar -cJf "$output/$output_name.tar.xz" -C "$dir" \
     --owner=root --group=root \
     partitions/ system/
-echo "$(date +%Y%m%d)-$RANDOM" > "$output/$output_name.tar.build"
+date --utc '+%Y%m%d-%H%M%SZ' > "$output/$output_name.tar.build"
