@@ -290,14 +290,14 @@ if [ -n "$deviceinfo_has_recovery_partition" ] && $deviceinfo_has_recovery_parti
     EXTRA_ARGS=""
 
     if [ "$deviceinfo_bootimg_header_version" -ge 2 ]; then
-        EXTRA_ARGS+=" --header_version $deviceinfo_bootimg_header_version --dtb $DTB --dtb_offset $deviceinfo_flash_offset_dtb"
+        EXTRA_ARGS+=" --header_version 2 --dtb $DTB --dtb_offset $deviceinfo_flash_offset_dtb"
     fi
 
     if [ "$deviceinfo_bootimg_header_version" -eq 0 ] && [ -n "$DT" ]; then
         EXTRA_ARGS+=" --header_version 0 --dt $DT"
     fi
 
-    if [ "$deviceinfo_bootimg_header_version" -le 2 ] && [ -n "$DTBO" ]; then
+    if [ -n "$DTBO" ]; then
         EXTRA_ARGS+=" --recovery_dtbo $DTBO"
     fi
 
