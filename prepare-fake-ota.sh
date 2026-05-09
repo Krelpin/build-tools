@@ -30,6 +30,14 @@ case "${deviceinfo_ubuntu_touch_release:-24.04-1.x}" in
         DEFAULT_OTA_CHANNEL="20.04/$ROOTFS_ARCH/android9plus/devel"
         ;;
     "24.04-1.x")
+        DEFAULT_ROOTFS_URL="https://ci.ubports.com/job/ubuntu-touch-rootfs/job/ubports%252F24.04-1.x/lastSuccessfulBuild/artifact/ubuntu-touch-android9plus-rootfs-$ROOTFS_ARCH.tar.gz"
+        DEFAULT_OTA_CHANNEL="24.04-1.x/$ROOTFS_ARCH/android9plus/daily"
+        ;;
+    "24.04-2.x")
+        DEFAULT_ROOTFS_URL="https://ci.ubports.com/job/ubuntu-touch-rootfs/job/ubports%252F24.04-2.x/lastSuccessfulBuild/artifact/ubuntu-touch-android9plus-rootfs-$ROOTFS_ARCH.tar.gz"
+        DEFAULT_OTA_CHANNEL="24.04-2.x/$ROOTFS_ARCH/android9plus/daily"
+        ;;
+    "utnext")
         DEFAULT_ROOTFS_URL="https://ci.ubports.com/job/ubuntu-touch-rootfs/job/main/lastSuccessfulBuild/artifact/ubuntu-touch-android9plus-rootfs-$ROOTFS_ARCH.tar.gz"
         DEFAULT_OTA_CHANNEL="utnext/$ROOTFS_ARCH/android9plus/daily"
         ;;
