@@ -34,6 +34,20 @@ case "${deviceinfo_ramdisk_compression:=gzip}" in
         ;;
 esac
 
+avb_add_hash_footer() {
+    local bootimg="$1" bytes="$2" part rsa4096_key extra_args
+    [ -z "$bytes" ] && return
+
+    if [ "$deviceinfo_bootimg_tailtype" = "SEAndroid" ]; then
+        printf 'SEANDROIDENFORCE' >> "$bootimg"
+        return
+    fi
+
+    part="${bootimg##*/}"; part="${part%.img}"; rsa4096_key="$HERE/rsa4096_${part}.pem"
+    [ -f "$rsa4096_key" ] && extra_args="--key $rsa4096_key --algorithm SHA256_RSA4096"
+    "$TMPDOWN/avb/avbtool" add_hash_footer --image "$bootimg" --partition_name "$part" --partition_size "$bytes" $extra_args
+}
+
 if [ -d "$HERE/ramdisk-recovery-overlay" ] && [ -e "$RECOVERY_RAMDISK" ]; then
     rm -rf "$TMPDOWN/ramdisk-recovery"
     mkdir -p "$TMPDOWN/ramdisk-recovery"
@@ -261,28 +275,22 @@ else
     fi
     if [ ${#VENDOR_RAMDISK_ARGS[@]} -ge 1 ]; then
         [ "$deviceinfo_bootimg_has_vendor_kernel_boot_partition" != "true" ] && VENDOR_RAMDISK_ARGS+=($EXTRA_VENDOR_KERNEL_ARGS)
-        "$MKBOOTIMG" "${VENDOR_RAMDISK_ARGS[@]}" --vendor_cmdline "$deviceinfo_kernel_cmdline" --header_version $deviceinfo_bootimg_header_version --vendor_boot "$(dirname "$OUT")/vendor_$(basename "$OUT")" $EXTRA_VENDOR_ARGS
+        VENDOR_BOOT_IMAGE="$(dirname "$OUT")/vendor_$(basename "$OUT")"
+        "$MKBOOTIMG" "${VENDOR_RAMDISK_ARGS[@]}" --vendor_cmdline "$deviceinfo_kernel_cmdline" --header_version $deviceinfo_bootimg_header_version --vendor_boot "$VENDOR_BOOT_IMAGE" $EXTRA_VENDOR_ARGS
+        avb_add_hash_footer "$VENDOR_BOOT_IMAGE" "$deviceinfo_vendor_boot_partition_size"
     fi
 fi
 
 if [ -n "$deviceinfo_bootimg_partition_size" ]; then
-    if [ "$deviceinfo_bootimg_tailtype" == "SEAndroid" ]
-    then
-        printf 'SEANDROIDENFORCE' >> "$OUT"
-    else
-        EXTRA_ARGS=""
-        [ -f "$HERE/rsa4096_boot.pem" ] && EXTRA_ARGS=" --key $HERE/rsa4096_boot.pem --algorithm SHA256_RSA4096"
-        python3 "$TMPDOWN/avb/avbtool" add_hash_footer --image "$OUT" --partition_name boot --partition_size $deviceinfo_bootimg_partition_size $EXTRA_ARGS
+    avb_add_hash_footer "$OUT" "$deviceinfo_bootimg_partition_size"
 
-        if [ -n "$deviceinfo_bootimg_append_vbmeta" ] && $deviceinfo_bootimg_append_vbmeta; then
-            python3 "$TMPDOWN/avb/avbtool" append_vbmeta_image --image "$OUT" --partition_size "$deviceinfo_bootimg_partition_size" --vbmeta_image "$TMPDOWN/vbmeta.img"
-        fi
+    if [ -n "$deviceinfo_bootimg_append_vbmeta" ] && $deviceinfo_bootimg_append_vbmeta; then
+        "$TMPDOWN/avb/avbtool" append_vbmeta_image --image "$OUT" --partition_size "$deviceinfo_bootimg_partition_size" --vbmeta_image "$TMPDOWN/vbmeta.img"
     fi
 fi
 
 if [ -n "$INIT_BOOT_IMAGE" ]; then
-    init_partition_size="${deviceinfo_init_boot_partition_size:-8388608}"
-    python3 "$TMPDOWN/avb/avbtool" add_hash_footer --image "$INIT_BOOT_IMAGE" --partition_name init_boot --partition_size $init_partition_size $INIT_BOOT_EXTRA_ARGS
+    avb_add_hash_footer "$INIT_BOOT_IMAGE" "${deviceinfo_init_boot_partition_size:-$((8*$((2**20))))}"
 fi
 
 if [ -n "$deviceinfo_has_recovery_partition" ] && $deviceinfo_has_recovery_partition; then
@@ -302,15 +310,5 @@ if [ -n "$deviceinfo_has_recovery_partition" ] && $deviceinfo_has_recovery_parti
     fi
 
     "$MKBOOTIMG" --kernel "$KERNEL" --ramdisk "$RECOVERY_RAMDISK" --base $deviceinfo_flash_offset_base --kernel_offset $deviceinfo_flash_offset_kernel --ramdisk_offset $deviceinfo_flash_offset_ramdisk --second_offset $deviceinfo_flash_offset_second --tags_offset $deviceinfo_flash_offset_tags --pagesize $deviceinfo_flash_pagesize --cmdline "$deviceinfo_kernel_cmdline" -o "$RECOVERY" --os_version $deviceinfo_bootimg_os_version --os_patch_level $deviceinfo_bootimg_os_patch_level $EXTRA_ARGS
-
-    if [ -n "$deviceinfo_recovery_partition_size" ]; then
-        EXTRA_ARGS=""
-        if [ "$deviceinfo_bootimg_tailtype" == "SEAndroid" ]
-        then
-            printf 'SEANDROIDENFORCE' >> "$RECOVERY"
-        else
-            [ -f "$HERE/rsa4096_recovery.pem" ] && EXTRA_ARGS=" --key $HERE/rsa4096_recovery.pem --algorithm SHA256_RSA4096"
-            python3 "$TMPDOWN/avb/avbtool" add_hash_footer --image "$RECOVERY" --partition_name recovery --partition_size $deviceinfo_recovery_partition_size $EXTRA_ARGS
-        fi
-    fi
+    avb_add_hash_footer "$RECOVERY" "$deviceinfo_recovery_partition_size"
 fi

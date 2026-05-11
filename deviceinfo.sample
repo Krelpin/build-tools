@@ -147,6 +147,9 @@ deviceinfo_bootimg_has_init_boot_partition="false"
 # Size of the init_boot partition (defaults to 8 MiB when unset)
 deviceinfo_init_boot_partition_size="8388608"
 
+# Size of the vendor_boot partition (rarely needed for AVB hash footer, e.g. 100 MiB)
+deviceinfo_vendor_boot_partition_size="$((100*$((2**20))))"
+
 # Whether kernel related bits are split away to a separate vendor_kernel_boot.img from vendor_boot.img
 # Enable for devices launched with Android 13+ with a vendor_kernel_boot partition (mostly QCOM so far)
 deviceinfo_bootimg_has_vendor_kernel_boot_partition="false"
