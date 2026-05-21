@@ -43,9 +43,9 @@ deviceinfo_kernel_arch="arm64"
 deviceinfo_halium_version="10"
 
 # The Ubuntu Touch release, which should be used (eg as rootfs):
-#  - focal  - 20.04
+#  - focal  - 20.04 (no active development)
 #  - 24.04-1.x  - 24.04
-deviceinfo_ubuntu_touch_release="focal"
+deviceinfo_ubuntu_touch_release="24.04-1.x"
 
 #
 ##########
