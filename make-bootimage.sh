@@ -54,7 +54,7 @@ if [ -d "$HERE/ramdisk-recovery-overlay" ] && [ -e "$RECOVERY_RAMDISK" ]; then
     cd "$TMPDOWN/ramdisk-recovery"
 
     HAS_DYNAMIC_PARTITIONS=false
-    [[ "$deviceinfo_kernel_cmdline" == *"systempart=/dev/mapper"* ]] && HAS_DYNAMIC_PARTITIONS=true
+    [[ "$deviceinfo_kernel_cmdline $deviceinfo_kernel_vendor_cmdline" == *"systempart=/dev/mapper"* ]] && HAS_DYNAMIC_PARTITIONS=true
 
     fakeroot -- bash <<EOF
 gzip -dc "$RECOVERY_RAMDISK" | cpio -i
@@ -257,10 +257,10 @@ if [ "$deviceinfo_bootimg_header_version" -le 2 ]; then
 else
     if ([ -n "$deviceinfo_bootimg_has_init_boot_partition" ] && [ "$deviceinfo_bootimg_has_init_boot_partition" == "true" ]) || [ -n "$deviceinfo_init_boot_partition_size" ]; then
         INIT_BOOT_IMAGE="$(dirname "$OUT")/init_$(basename "$OUT")"
-        "$MKBOOTIMG" --kernel "$KERNEL" --header_version $deviceinfo_bootimg_header_version -o "$OUT" --os_version $deviceinfo_bootimg_os_version --os_patch_level $deviceinfo_bootimg_os_patch_level $EXTRA_ARGS
+        "$MKBOOTIMG" --kernel "$KERNEL"  --cmdline "$deviceinfo_kernel_cmdline" --header_version $deviceinfo_bootimg_header_version -o "$OUT" --os_version $deviceinfo_bootimg_os_version --os_patch_level $deviceinfo_bootimg_os_patch_level $EXTRA_ARGS
         "$MKBOOTIMG" --ramdisk "$RAMDISK" --header_version $deviceinfo_bootimg_header_version -o "$INIT_BOOT_IMAGE"
     else
-        "$MKBOOTIMG" --kernel "$KERNEL" --ramdisk "$RAMDISK" --header_version $deviceinfo_bootimg_header_version -o "$OUT" --os_version $deviceinfo_bootimg_os_version --os_patch_level $deviceinfo_bootimg_os_patch_level $EXTRA_ARGS
+        "$MKBOOTIMG" --kernel "$KERNEL" --ramdisk "$RAMDISK"  --cmdline "$deviceinfo_kernel_cmdline" --header_version $deviceinfo_bootimg_header_version -o "$OUT" --os_version $deviceinfo_bootimg_os_version --os_patch_level $deviceinfo_bootimg_os_patch_level $EXTRA_ARGS
     fi
 
     VENDOR_RAMDISK_ARGS=()
@@ -277,7 +277,7 @@ else
     if [ ${#VENDOR_RAMDISK_ARGS[@]} -ge 1 ]; then
         [ "$deviceinfo_bootimg_has_vendor_kernel_boot_partition" != "true" ] && VENDOR_RAMDISK_ARGS+=($EXTRA_VENDOR_KERNEL_ARGS)
         VENDOR_BOOT_IMAGE="$(dirname "$OUT")/vendor_$(basename "$OUT")"
-        "$MKBOOTIMG" "${VENDOR_RAMDISK_ARGS[@]}" --vendor_cmdline "$deviceinfo_kernel_cmdline" --header_version $deviceinfo_bootimg_header_version --vendor_boot "$VENDOR_BOOT_IMAGE" $EXTRA_VENDOR_ARGS
+        "$MKBOOTIMG" "${VENDOR_RAMDISK_ARGS[@]}" --vendor_cmdline "$deviceinfo_kernel_vendor_cmdline" --header_version $deviceinfo_bootimg_header_version --vendor_boot "$VENDOR_BOOT_IMAGE" $EXTRA_VENDOR_ARGS
         avb_add_hash_footer "$VENDOR_BOOT_IMAGE" "$deviceinfo_vendor_boot_partition_size"
     fi
 fi
