@@ -75,6 +75,7 @@ echo "ro.product.name=halium_$deviceinfo_codename" >> prop.default
 if [ "$deviceinfo_use_unified_recovery" = "true" ]; then
     echo "ro.build.version.release=$deviceinfo_halium_version" >> prop.default
     echo "ro.build.version.incremental=ci.ubports.\$(date --utc -d "\$(sed -n 's/ro.build.date=//p' prop.default)" '+%Y%m%d.%H%M%S')" >> prop.default
+    echo "service.adb.root=1" >> prop.default
 fi
 
 find . | cpio -o -H newc | gzip -9 > "$TMPDOWN/ramdisk-recovery.img-merged"
