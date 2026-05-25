@@ -252,6 +252,14 @@ if [ -n "$deviceinfo_bootimg_board" ]; then
     EXTRA_ARGS+=" --board $deviceinfo_bootimg_board"
 fi
 
+# Historically it was impossible to set boot.img cmdline on GKI ports; keep the
+# status quo also working for now with below while existing ports update their
+# deviceinfo to explicitly target the vendor_boot.img one instead.
+if [[ -d "$HERE/vendor-ramdisk-overlay" && -z "$deviceinfo_kernel_vendor_cmdline" ]]; then
+    deviceinfo_kernel_vendor_cmdline="$deviceinfo_kernel_cmdline"
+    deviceinfo_kernel_cmdline=""
+fi
+
 if [ "$deviceinfo_bootimg_header_version" -le 2 ]; then
     "$MKBOOTIMG" --kernel "$KERNEL" --ramdisk "$RAMDISK" --cmdline "$deviceinfo_kernel_cmdline" --header_version $deviceinfo_bootimg_header_version -o "$OUT" --os_version $deviceinfo_bootimg_os_version --os_patch_level $deviceinfo_bootimg_os_patch_level $EXTRA_ARGS
 else
