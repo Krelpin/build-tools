@@ -22,7 +22,11 @@ do
     shift
 done
 
-BUILD_DIR="$(realpath "$BUILD_DIR")"
+if [ "$CI_PROJECT_ID" ]; then
+    BUILD_DIR="$(mktemp -d)"
+else
+    BUILD_DIR="$(realpath "$BUILD_DIR")"
+fi
 OUT="$(realpath "$OUT")"
 mkdir -p "$BUILD_DIR" "$OUT"
 
