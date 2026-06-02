@@ -75,6 +75,9 @@ echo "ro.product.name=halium_$deviceinfo_codename" >> prop.default
 if [ "$deviceinfo_use_unified_recovery" = "true" ]; then
     echo "ro.build.version.release=$deviceinfo_halium_version" >> prop.default
     echo "ro.build.version.incremental=ci.ubports.\$(date --utc -d "\$(sed -n 's/ro.build.date=//p' prop.default)" '+%Y%m%d.%H%M%S')" >> prop.default
+    echo "ro.recovery.usb.vid=18D1" >> prop.default
+    echo "ro.recovery.usb.adb.pid=D001" >> prop.default
+    echo "ro.recovery.usb.fastboot.pid=4EE0" >> prop.default
     echo "service.adb.root=1" >> prop.default
 fi
 
