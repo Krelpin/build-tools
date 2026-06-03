@@ -22,7 +22,7 @@ do
     shift
 done
 
-if [ "$CI_PROJECT_ID" ]; then
+if [ "$ADAPTATION_TOOLS_USE_TMP_BUILD_DIR" ]; then
     BUILD_DIR="$(mktemp -d)"
 else
     BUILD_DIR="$(realpath "$BUILD_DIR")"
