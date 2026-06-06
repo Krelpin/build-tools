@@ -12,6 +12,8 @@ variables:
   ADAPTATION_TOOLS_BRANCH: main
   # Use a shorter temporary BUILD_DIR in case e.g. kernel build fails otherwise like on Fairphone 4
   # ADAPTATION_TOOLS_USE_TMP_BUILD_DIR: 1
+  # Call the toplevel build.sh wrapper instead of cloned generic one directly when more complex port-specific logic is needed
+  # ADAPTATION_TOOLS_USE_BUILD_WRAPPER: 1
 
 image: ubuntu:22.04
 
@@ -29,7 +31,7 @@ build:
       git clone -b $ADAPTATION_TOOLS_BRANCH
       https://gitlab.com/ubports/porting/community-ports/halium-generic-adaptation-build-tools.git
       build
-    - ./build/build.sh
+    - [ -z "$ADAPTATION_TOOLS_USE_BUILD_WRAPPER" ] && ./build/build.sh || ./build.sh
   artifacts:
     paths:
       - out/*
