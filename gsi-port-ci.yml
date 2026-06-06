@@ -80,4 +80,5 @@ devel-flashable:
     paths:
       - out/*boot.img
       - out/dtbo.img
+      - out/recovery.img
       - out/ubuntu.img.zst
