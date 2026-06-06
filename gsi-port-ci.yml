@@ -31,7 +31,8 @@ build:
       git clone -b $ADAPTATION_TOOLS_BRANCH
       https://gitlab.com/ubports/porting/community-ports/halium-generic-adaptation-build-tools.git
       build
-    - [ -z "$ADAPTATION_TOOLS_USE_BUILD_WRAPPER" ] && ./build/build.sh || ./build.sh
+    - >-
+      [ -z "$ADAPTATION_TOOLS_USE_BUILD_WRAPPER" ] && ./build/build.sh || ./build.sh
   artifacts:
     paths:
       - out/*
