@@ -75,7 +75,7 @@ devel-flashable:
     - mkdir -p out
     - ./build/system-image-from-ota.sh ota/ubuntu_command out
     - mv out/rootfs.img out/ubuntu.img
-    - zstd -15 -T0 out/ubuntu.img
+    - zstd --ultra -22 -T0 out/ubuntu.img
     - rm -f out/ubuntu.img
   artifacts:
     paths:
