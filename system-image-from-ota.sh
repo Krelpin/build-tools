@@ -182,7 +182,7 @@ do
                 system)
                     FULL_IMAGE=1
                     rm -f "$OUT/rootfs.img"
-                    truncate -s "${deviceinfo_system_partition_size:-3500M}" "$OUT/rootfs.img"
+                    truncate -s "${deviceinfo_system_partition_size:-3584M}" "$OUT/rootfs.img"
                     mkfs.ext4 -F "$OUT/rootfs.img"
                     # Disable orphan_file as needed when host e2fsprogs 1.47+ would create something
                     # incompatible with e2fsck 1.45 of UBports recovery breaking 20.04 OTA updates
@@ -236,7 +236,7 @@ do
                         sudo umount "$SYSTEM_MOUNTPOINT"
                         rmdir "$SYSTEM_MOUNTPOINT"
                     else
-                        mke2fs -t ext4 -O \^metadata_csum "$OUT/rootfs.img" ${deviceinfo_system_partition_size:-3500M} -d "$SYSTEM_MOUNTPOINT"
+                        mke2fs -t ext4 -O \^metadata_csum "$OUT/rootfs.img" ${deviceinfo_system_partition_size:-3584M} -d "$SYSTEM_MOUNTPOINT"
                         rm -rf "$SYSTEM_MOUNTPOINT"
                     fi
                     # Create fastboot flashable image

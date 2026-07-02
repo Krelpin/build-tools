@@ -236,7 +236,7 @@ deviceinfo_rootfs_image_sector_size="4096"
 
 # Size of the device's (dynamic) system partition
 # This will be the maximum size for rootfs.img
-deviceinfo_system_partition_size="3500M"
+deviceinfo_system_partition_size="3584M"
 
 # Whether to enable overlaystore or not
 # For more information, see: https://docs.ubports.com/en/latest/porting/configure_test_fix/Overlay.html#ubuntu-touch-20-04-and-later
