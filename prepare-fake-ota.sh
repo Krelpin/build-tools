@@ -24,7 +24,7 @@ esac
 
 # Fetches android9 rootfs and generic system image to prepare flashable image from CI-built device tarball
 URL='https://system-image.ubports.com'
-case "${deviceinfo_ubuntu_touch_release:-24.04-1.x}" in
+case "${deviceinfo_ubuntu_touch_release:-24.04-2.x}" in
     "focal")
         DEFAULT_ROOTFS_URL="https://ci.ubports.com/job/ubuntu-touch-rootfs/job/ubports%252Ffocal/lastSuccessfulBuild/artifact/ubuntu-touch-android9plus-rootfs-$ROOTFS_ARCH.tar.gz"
         DEFAULT_OTA_CHANNEL="20.04/$ROOTFS_ARCH/android9plus/devel"

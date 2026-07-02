@@ -4,7 +4,7 @@ set -ex
 HERE=$(pwd)
 source "${HERE}/deviceinfo"
 
-deviceinfo_ubuntu_touch_release=${deviceinfo_ubuntu_touch_release:-focal}
+deviceinfo_ubuntu_touch_release=${deviceinfo_ubuntu_touch_release:-24.04-2.x}
 
 device=$1
 output=$(realpath "$2")
