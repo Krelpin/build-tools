@@ -253,7 +253,8 @@ setup_recovery_ramdisk() {
 	return
     fi
 
-    curl --location --output ramdisk-recovery.img "https://ci.ubports.com/job/UBportsCommunityPortsJenkinsCI/job/ubports%2Fporting%2Fcommunity-ports%2Fjenkins-ci%2Fgeneric_arm64/job/halium-14.0/lastSuccessfulBuild/artifact/ramdisk-recovery.img"
+    : "${deviceinfo_prebuilt_recovery_ramdisk_source:=https://ci.ubports.com/job/UBportsCommunityPortsJenkinsCI/job/ubports%2Fporting%2Fcommunity-ports%2Fjenkins-ci%2Fgeneric_arm64/job/halium-14.0/lastSuccessfulBuild/artifact/ramdisk-recovery.img}"
+    curl --location --output ramdisk-recovery.img "$deviceinfo_prebuilt_recovery_ramdisk_source"
 }
 
 cd "$TMPDOWN"

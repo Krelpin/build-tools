@@ -213,6 +213,9 @@ deviceinfo_use_unified_recovery="true"
 # - ~640 PPI -> xxxhdpi
 deviceinfo_unified_recovery_ui_density="mdpi"
 
+# Download prebuilt recovery ramdisk for the (vendor_)boot image
+deviceinfo_prebuilt_recovery_ramdisk_source="https://ci.ubports.com/job/UBportsCommunityPortsJenkinsCI/job/ubports%2Fporting%2Fcommunity-ports%2Fjenkins-ci%2Fgeneric_arm64/job/halium-14.0/lastSuccessfulBuild/artifact/ramdisk-recovery.img"
+
 # Whether a recovery.img should be generated or not
 #
 # Note: Setting this also requires a separate recovery ramdisk to exist at:
