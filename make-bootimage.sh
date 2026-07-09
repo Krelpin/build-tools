@@ -34,6 +34,21 @@ case "${deviceinfo_ramdisk_compression:=gzip}" in
         ;;
 esac
 
+case "${deviceinfo_recovery_ramdisk_compression:=gzip}" in
+    gzip)
+        REC_COMPRESSION_CMD="gzip -9"
+        REC_EXT="gz"
+        ;;
+    xz)
+        REC_COMPRESSION_CMD="xz --check=crc32 -9"
+        REC_EXT="xz"
+        ;;
+    *)
+        echo "Unsupported deviceinfo_recovery_ramdisk_compression value: '$deviceinfo_recovery_ramdisk_compression'"
+        exit 1
+        ;;
+esac
+
 avb_add_hash_footer() {
     local bootimg="$1" bytes="$2" part rsa4096_key extra_args
     [ -z "$bytes" ] && return
@@ -81,7 +96,7 @@ if [ "$deviceinfo_use_unified_recovery" = "true" ]; then
     echo "service.adb.root=1" >> prop.default
 fi
 
-find . | cpio -o -H newc | gzip -9 > "$TMPDOWN/ramdisk-recovery.img-merged"
+find . | cpio -o -H newc | $REC_COMPRESSION_CMD > "$TMPDOWN/ramdisk-recovery.img-merged"
 EOF
     if [ ! -f "$HERE/ramdisk-overlay/ramdisk-recovery.img" ]; then
         RECOVERY_RAMDISK="$TMPDOWN/ramdisk-recovery.img-merged"
@@ -93,7 +108,12 @@ fi
 
 if [ -e "$RECOVERY_RAMDISK" ] && ([ "$deviceinfo_bootimg_has_init_boot_partition" = "true" ] || ([ "$deviceinfo_use_unified_recovery" = "true" ] && [ "${deviceinfo_has_recovery_partition:-false}" = "false" ])); then
     mkdir -p "$TMPDOWN/recovery-ramdisk-fragment"
-    cp "$RECOVERY_RAMDISK" "$TMPDOWN/recovery-ramdisk-fragment/ramdisk-recovery.img"
+    if [ "$deviceinfo_recovery_ramdisk_compression" = "gzip" ]; then
+        cp "$RECOVERY_RAMDISK" "$TMPDOWN/recovery-ramdisk-fragment/ramdisk-recovery.img"
+    else
+        # Name the ramdisk after its actual compression
+        cp "$RECOVERY_RAMDISK" "$TMPDOWN/recovery-ramdisk-fragment/ramdisk-recovery.cpio.$REC_EXT"
+    fi
 
     cd "$TMPDOWN/recovery-ramdisk-fragment"
     find . | cpio -o -H newc | $COMPRESSION_CMD > "$RECOVERY_RAMDISK-fragment"
