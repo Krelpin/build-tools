@@ -63,7 +63,7 @@ avb_add_hash_footer() {
     "$TMPDOWN/avb/avbtool" add_hash_footer --image "$bootimg" --partition_name "$part" --partition_size "$bytes" $extra_args
 }
 
-if [ -d "$HERE/ramdisk-recovery-overlay" ] && [ -e "$RECOVERY_RAMDISK" ]; then
+if [ -e "$RECOVERY_RAMDISK" ]; then
     rm -rf "$TMPDOWN/ramdisk-recovery"
     mkdir -p "$TMPDOWN/ramdisk-recovery"
     cd "$TMPDOWN/ramdisk-recovery"
