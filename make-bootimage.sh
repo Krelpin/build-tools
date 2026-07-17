@@ -70,6 +70,8 @@ if [ -e "$RECOVERY_RAMDISK" ]; then
 
     HAS_DYNAMIC_PARTITIONS=false
     [[ "$deviceinfo_kernel_cmdline $deviceinfo_kernel_vendor_cmdline" == *"systempart=/dev/mapper"* ]] && HAS_DYNAMIC_PARTITIONS=true
+    HAS_AB_SLOTS=false
+    grep -q "slotselect" "$HERE/ramdisk-recovery-overlay/system/etc/recovery.fstab" 2>/dev/null && HAS_AB_SLOTS=true || true
 
     fakeroot -- bash <<EOF
 gzip -dc "$RECOVERY_RAMDISK" | cpio -i
@@ -94,6 +96,7 @@ if [ "$deviceinfo_use_unified_recovery" = "true" ]; then
     echo "ro.recovery.usb.adb.pid=D001" >> prop.default
     echo "ro.recovery.usb.fastboot.pid=4EE0" >> prop.default
     echo "service.adb.root=1" >> prop.default
+    echo "ro.build.ab_update=$HAS_AB_SLOTS" >> prop.default
 fi
 
 find . | cpio -o -H newc | $REC_COMPRESSION_CMD > "$TMPDOWN/ramdisk-recovery.img-merged"
