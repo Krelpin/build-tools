@@ -220,9 +220,9 @@ setup_ramdisk() {
     print_header "Setting up ramdisk"
 
     # shellcheck disable=SC2154
-    if [ -n "$deviceinfo_prebuilt_boot_ramdisk" ] && [ -f "$deviceinfo_prebuilt_boot_ramdisk" ]; then
+    if [ -n "$deviceinfo_prebuilt_boot_ramdisk" ] && [ -f "$HERE/$deviceinfo_prebuilt_boot_ramdisk" ]; then
         print_message "Using prebuilt ramdisk: $deviceinfo_prebuilt_boot_ramdisk"
-        cp "$deviceinfo_prebuilt_boot_ramdisk" halium-boot-ramdisk.img
+        cp "$HERE/$deviceinfo_prebuilt_boot_ramdisk" halium-boot-ramdisk.img
     elif [ -n "$deviceinfo_prebuilt_boot_ramdisk_source" ]; then
         print_message "Downloading prebuilt ramdisk from: $deviceinfo_prebuilt_boot_ramdisk_source"
         RAMDISK_URL="$deviceinfo_prebuilt_boot_ramdisk_source"
