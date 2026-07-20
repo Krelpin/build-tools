@@ -176,8 +176,11 @@ setup_tooling() {
             13)
                 BUILD_TOOLS_BRANCH="master-kernel-build-2022"
                 ;;
-            *)
+            14)
                 BUILD_TOOLS_BRANCH="main-kernel-build-2023"
+                ;;
+            *)
+                BUILD_TOOLS_BRANCH="main-kernel-build-2024"
                 ;;
         esac
 
