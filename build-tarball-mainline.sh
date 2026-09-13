@@ -4,7 +4,7 @@ set -ex
 HERE=$(pwd)
 source "${HERE}/deviceinfo"
 
-deviceinfo_ubuntu_touch_release=${deviceinfo_ubuntu_touch_release:-24.04-2.x}
+deviceinfo_krelpin_release=${deviceinfo_krelpin_release:-${deviceinfo_release:-${deviceinfo_ubuntu_touch_release:-rolling}}}
 
 device=$1
 output=$(realpath "$2")
@@ -23,8 +23,10 @@ fi
 
 cp -av overlay/* "${dir}/"
 
-if [ -e "${HERE}/${deviceinfo_ubuntu_touch_release}-overlay" ]; then
-    cp -a ${HERE}/${deviceinfo_ubuntu_touch_release}-overlay/system/* $dir/system/
+if [ -e "${HERE}/${deviceinfo_krelpin_release}-overlay" ]; then
+    cp -a ${HERE}/${deviceinfo_krelpin_release}-overlay/system/* $dir/system/
+elif [ -e "${HERE}/krelpin-overlay" ]; then
+    cp -a ${HERE}/krelpin-overlay/system/* $dir/system/
 fi
 
 INITRC_PATHS="

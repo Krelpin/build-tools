@@ -42,12 +42,9 @@ deviceinfo_kernel_arch="arm64"
 #  - 12
 deviceinfo_halium_version="10"
 
-# The Ubuntu Touch release, which should be used (eg as rootfs):
-#  - focal - 20.04 (no active development)
-#  - 24.04-1.x
-#  - 24.04-2.x (default when unspecified)
-#  - 26.04-1.x
-deviceinfo_ubuntu_touch_release="24.04-2.x"
+# The Krelpin release to use as rootfs:
+#  - rolling (default)
+deviceinfo_krelpin_release="rolling"
 
 #
 ##########
@@ -56,7 +53,7 @@ deviceinfo_ubuntu_touch_release="24.04-2.x"
 # Kernel
 
 # URL of source repo
-deviceinfo_kernel_source="https://gitlab.com/ubports/porting/community-ports/example_kernel_source.git"
+deviceinfo_kernel_source="https://github.com/Krelpin/example_kernel_source.git"
 
 # Branch of repo
 deviceinfo_kernel_source_branch="main"
@@ -242,5 +239,5 @@ deviceinfo_rootfs_image_sector_size="4096"
 deviceinfo_system_partition_size="3584M"
 
 # Whether to enable overlaystore or not
-# For more information, see: https://docs.ubports.com/en/latest/porting/configure_test_fix/Overlay.html#ubuntu-touch-20-04-and-later
+# For more information, see: https://docs.ubports.com/en/latest/porting/configure_test_fix/Overlay.html
 deviceinfo_use_overlaystore="true"

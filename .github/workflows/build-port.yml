@@ -1,0 +1,142 @@
+name: Build Port
+
+# Reusable GitHub Actions workflow for device port repositories.
+#
+# Usage in a device port repository (.github/workflows/build.yml):
+# ---
+# name: Build
+# on:
+#   push:
+#     branches: [ main ]
+#   pull_request:
+#     branches: [ main ]
+#   workflow_dispatch:
+#
+# jobs:
+#   build:
+#     uses: Krelpin/halium-generic-adaptation-build-tools/.github/workflows/build-port.yml@main
+# ---
+
+on:
+  workflow_call:
+    inputs:
+      adaptation_tools_branch:
+        description: 'Branch of halium-generic-adaptation-build-tools'
+        required: false
+        default: 'main'
+        type: string
+      adaptation_tools_repo:
+        description: 'Repository of halium-generic-adaptation-build-tools'
+        required: false
+        default: 'Krelpin/halium-generic-adaptation-build-tools'
+        type: string
+      use_build_wrapper:
+        description: 'Call the toplevel build.sh wrapper instead of generic one directly'
+        required: false
+        default: false
+        type: boolean
+  workflow_dispatch:
+    inputs:
+      adaptation_tools_branch:
+        description: 'Branch of halium-generic-adaptation-build-tools'
+        required: false
+        default: 'main'
+        type: string
+      adaptation_tools_repo:
+        description: 'Repository of halium-generic-adaptation-build-tools'
+        required: false
+        default: 'Krelpin/halium-generic-adaptation-build-tools'
+        type: string
+      use_build_wrapper:
+        description: 'Call the toplevel build.sh wrapper instead of generic one directly'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  build:
+    name: Build Kernel & Adaptation
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout port repository
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            bc bison build-essential ca-certificates cpio curl \
+            fakeroot flex git kmod libelf-dev libssl-dev libtinfo5 lz4 python2 python3 sudo unzip wget \
+            xz-utils pahole libbpf-dev
+          sudo ln -sf /usr/bin/python2 /usr/bin/python
+
+      - name: Clone adaptation build tools
+        run: |
+          git clone -b "${{ inputs.adaptation_tools_branch || 'main' }}" \
+            "https://github.com/${{ inputs.adaptation_tools_repo || 'Krelpin/halium-generic-adaptation-build-tools' }}.git" \
+            build
+
+      - name: Build adaptation tarball and images
+        run: |
+          if [ "${{ inputs.use_build_wrapper }}" = "true" ]; then
+            ./build.sh
+          else
+            ./build/build.sh
+          fi
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: port-build-artifacts
+          path: out/*
+
+  devel-flashable:
+    name: Generate Flashable Images
+    needs: build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout port repository
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: port-build-artifacts
+          path: out
+
+      - name: Install flashable image creation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git jq sudo wget xz-utils zstd \
+            android-sdk-libsparse-utils || sudo apt-get install -y git img2simg jq sudo wget xz-utils zstd
+
+      - name: Clone adaptation build tools
+        run: |
+          git clone -b "${{ inputs.adaptation_tools_branch || 'main' }}" \
+            "https://github.com/${{ inputs.adaptation_tools_repo || 'Krelpin/halium-generic-adaptation-build-tools' }}.git" \
+            build
+
+      - name: Prepare fake OTA and generate images
+        run: |
+          DEVICE="$(source deviceinfo && echo $deviceinfo_codename)"
+          ./build/prepare-fake-ota.sh "out/device_${DEVICE}.tar.xz" ota
+          mkdir -p out
+          COMMAND_FILE="ota/krelpin_command"
+          [ ! -f "$COMMAND_FILE" ] && COMMAND_FILE="ota/ubuntu_command"
+          ./build/system-image-from-ota.sh "$COMMAND_FILE" out
+          if [ -f out/rootfs.img ]; then
+            mv out/rootfs.img out/krelpin.img
+            zstd --ultra -22 -T0 out/krelpin.img
+            rm -f out/krelpin.img
+          fi
+
+      - name: Upload flashable images
+        uses: actions/upload-artifact@v4
+        with:
+          name: port-flashable-images
+          path: |
+            out/*boot.img
+            out/dtbo.img
+            out/recovery.img
+            out/system.img
+            out/krelpin.img.zst

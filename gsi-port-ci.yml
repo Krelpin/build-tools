@@ -8,7 +8,8 @@
 # to do custom things (e.g. Volla Phone 22's bootloader-flashable super.img).
 
 variables:
-  # Branch of https://gitlab.com/ubports/porting/community-ports/halium-generic-adaptation-build-tools
+  # Repo and branch of halium-generic-adaptation-build-tools
+  ADAPTATION_TOOLS_REPO: https://github.com/Krelpin/halium-generic-adaptation-build-tools.git
   ADAPTATION_TOOLS_BRANCH: main
   # Use a shorter temporary BUILD_DIR in case e.g. kernel build fails otherwise like on Fairphone 4
   # ADAPTATION_TOOLS_USE_TMP_BUILD_DIR: 1
@@ -29,7 +30,7 @@ build:
     - ln -s python2 /usr/bin/python
     - >-
       git clone -b $ADAPTATION_TOOLS_BRANCH
-      https://gitlab.com/ubports/porting/community-ports/halium-generic-adaptation-build-tools.git
+      $ADAPTATION_TOOLS_REPO
       build
     - >-
       [ -z "$ADAPTATION_TOOLS_USE_BUILD_WRAPPER" ] && ./build/build.sh || ./build.sh
@@ -44,12 +45,12 @@ flashable:
     - apt install -y git img2simg jq sudo wget xz-utils
     - >-
       git clone -b $ADAPTATION_TOOLS_BRANCH
-      https://gitlab.com/ubports/porting/community-ports/halium-generic-adaptation-build-tools.git
+      $ADAPTATION_TOOLS_REPO
       build
     - DEVICE="$(source deviceinfo && echo $deviceinfo_codename)"
     - ./build/fetch-and-prepare-latest-ota.sh "20.04/arm64/android9plus/devel" "$DEVICE" ota
     - mkdir -p out
-    - ./build/system-image-from-ota.sh ota/ubuntu_command out
+    - ./build/system-image-from-ota.sh ota/krelpin_command out
   artifacts:
     paths:
       - out/boot.img
@@ -68,18 +69,18 @@ devel-flashable:
     - apt install -y git img2simg jq sudo wget xz-utils zstd
     - >-
       git clone -b $ADAPTATION_TOOLS_BRANCH
-      https://gitlab.com/ubports/porting/community-ports/halium-generic-adaptation-build-tools.git
+      $ADAPTATION_TOOLS_REPO
       build
     - DEVICE="$(source deviceinfo && echo $deviceinfo_codename)"
     - ./build/prepare-fake-ota.sh out/device_${DEVICE}.tar.xz ota
     - mkdir -p out
-    - ./build/system-image-from-ota.sh ota/ubuntu_command out
-    - mv out/rootfs.img out/ubuntu.img
-    - zstd --ultra -22 -T0 out/ubuntu.img
-    - rm -f out/ubuntu.img
+    - ./build/system-image-from-ota.sh ota/krelpin_command out
+    - mv out/rootfs.img out/krelpin.img
+    - zstd --ultra -22 -T0 out/krelpin.img
+    - rm -f out/krelpin.img
   artifacts:
     paths:
       - out/*boot.img
       - out/dtbo.img
       - out/recovery.img
-      - out/ubuntu.img.zst
+      - out/krelpin.img.zst
