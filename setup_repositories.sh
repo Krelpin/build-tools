@@ -1,5 +1,6 @@
 #!/bin/bash
 set -ex
+shopt -s extglob
 
 kernel_arch="${deviceinfo_kernel_arch:-$deviceinfo_arch}"
 
@@ -90,53 +91,76 @@ setup_clang() {
 
     print_header "Setting up clang repositories"
 
-    # shellcheck disable=SC2154
-    local CLANG_BRANCH="$deviceinfo_kernel_clang_branch"
-    # shellcheck disable=SC2154
-    local CLANG_REVISION="$deviceinfo_kernel_clang_revision"
-    if [[ -z "$CLANG_BRANCH" || -z "$CLANG_REVISION" ]]; then
+    if [ -n "$deviceinfo_kernel_clang_toolchain_source" ]; then
+        fetch_tarball_if_not_existing "$deviceinfo_kernel_clang_toolchain_source"
+        local clang_dir="${deviceinfo_kernel_clang_toolchain_source##*/}"
+        clang_dir="${clang_dir%.tar.*}"
+        # shellcheck disable=SC2034
+        CLANG_PATH="$TMPDOWN/$clang_dir"
+    else
         # shellcheck disable=SC2154
-        case "$deviceinfo_halium_version" in
-            9)
-                CLANG_BRANCH="pie-gsi"
-                CLANG_REVISION="4691093"
-                ;;
-            10)
-                CLANG_BRANCH="android10-gsi"
-                CLANG_REVISION="r353983c"
-                ;;
-            11)
-                CLANG_BRANCH="android11-gsi"
-                CLANG_REVISION="r383902"
-                ;;
-            12)
-                CLANG_BRANCH="android12L-gsi"
-                CLANG_REVISION="r416183b"
-                ;;
-            13)
-                CLANG_BRANCH="master-kernel-build-2022"
-                CLANG_REVISION="r450784e"
-                ;;
-            14)
-                CLANG_BRANCH="main-kernel-build-2023"
-                CLANG_REVISION="r487747c"
-                ;;
-            15|16)
-                CLANG_BRANCH="main-kernel-build-2024"
-                CLANG_REVISION="r510928"
-                ;;
+        local CLANG_BRANCH="$deviceinfo_kernel_clang_branch"
+        # shellcheck disable=SC2154
+        local CLANG_REVISION="$deviceinfo_kernel_clang_revision"
+        if [[ -z "$CLANG_BRANCH" || -z "$CLANG_REVISION" ]]; then
+            # shellcheck disable=SC2154
+            case "$deviceinfo_halium_version" in
+                9)
+                    CLANG_BRANCH="pie-gsi"
+                    CLANG_REVISION="4691093"
+                    ;;
+                10)
+                    CLANG_BRANCH="android10-gsi"
+                    CLANG_REVISION="r353983c"
+                    ;;
+                11)
+                    CLANG_BRANCH="android11-gsi"
+                    CLANG_REVISION="r383902"
+                    ;;
+                12)
+                    CLANG_BRANCH="android12L-gsi"
+                    CLANG_REVISION="r416183b"
+                    ;;
+                13)
+                    CLANG_BRANCH="master-kernel-build-2022"
+                    CLANG_REVISION="r450784e"
+                    ;;
+                14)
+                    CLANG_BRANCH="main-kernel-build-2023"
+                    CLANG_REVISION="r487747c"
+                    ;;
+                15|16)
+                    CLANG_BRANCH="main-kernel-build-2024"
+                    CLANG_REVISION="r510928"
+                    ;;
 
-            *)
-                print_error "Clang is not supported with halium version '$deviceinfo_halium_version'"
-                exit 1
-                ;;
-        esac
+                *)
+                    print_error "Clang is not supported with halium version '$deviceinfo_halium_version'"
+                    exit 1
+                    ;;
+            esac
+        fi
+
+        # Determine host architecture for Clang prebuilts
+        local CLANG_HOST="linux-x86"
+        local HOST_ARCH
+        HOST_ARCH=$(uname -m)
+
+        if [[ "$HOST_ARCH" = "aarch64" || "$HOST_ARCH" = "arm64" ]]; then
+            # Check if branch exists in Google's linux-arm64 prebuilts repository
+            if git ls-remote --exit-code --heads "https://android.googlesource.com/platform/prebuilts/clang/host/linux-arm64" "$CLANG_BRANCH" &>/dev/null; then
+                CLANG_HOST="linux-arm64"
+            else
+                print_warning "Google does not provide arm64 prebuilts for branch '$CLANG_BRANCH'."
+                print_warning "Falling back to linux-x86 prebuilts (requires qemu-user / binfmt on ARM64 host)."
+            fi
+        fi
+
+        clone_if_not_existing "https://android.googlesource.com/platform/prebuilts/clang/host/$CLANG_HOST" "$CLANG_BRANCH"
+        # shellcheck disable=SC2034
+        CLANG_PATH="$TMPDOWN/$CLANG_HOST/clang-$CLANG_REVISION"
+        rm -rf "$TMPDOWN/$CLANG_HOST/.git" "$TMPDOWN/$CLANG_HOST/"!("clang-$CLANG_REVISION")
     fi
-
-    clone_if_not_existing "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86" "$CLANG_BRANCH"
-    # shellcheck disable=SC2034
-    CLANG_PATH="$TMPDOWN/linux-x86/clang-$CLANG_REVISION"
-    rm -rf "$TMPDOWN/linux-x86/.git" "$TMPDOWN/linux-x86/"!("clang-$CLANG_REVISION")
     drop_python_wrapper "$CLANG_PATH/bin/clang"
 
     if [ -n "$deviceinfo_kernel_llvm_compile" ] && $deviceinfo_kernel_llvm_compile; then

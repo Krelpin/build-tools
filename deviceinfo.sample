@@ -85,6 +85,9 @@ deviceinfo_kernel_clang_branch="android12L-gsi"
 # Use a specific revision of prebuilt clang revision (version) instead of default for current Halium version
 deviceinfo_kernel_clang_revision="r416183b"
 
+# URL of a custom Clang toolchain archive (optional)
+# deviceinfo_kernel_clang_toolchain_source="https://example.com/clang-r416183b-linux-arm64.tar.xz"
+
 # Whether LLVM should be used as primary toolchain or not
 # Note: requires `deviceinfo_kernel_clang_compile` to be enabled
 deviceinfo_kernel_llvm_compile="false"
