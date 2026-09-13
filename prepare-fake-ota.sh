@@ -24,30 +24,14 @@ esac
 
 # Fetches android9 rootfs and generic system image to prepare flashable image from CI-built device tarball
 URL='https://system-image.ubports.com'
-RELEASE="${deviceinfo_krelpin_release:-${deviceinfo_release:-${deviceinfo_ubuntu_touch_release:-rolling}}}"
+RELEASE="${deviceinfo_krelpin_release:-${deviceinfo_release:-rolling}}"
 case "$RELEASE" in
     "rolling"|"krelpin")
         DEFAULT_ROOTFS_URL="https://github.com/Krelpin/krelpin/releases/latest/download/krelpin-rootfs-$ROOTFS_ARCH.tar.gz"
         DEFAULT_OTA_CHANNEL="krelpin/$ROOTFS_ARCH/rolling"
         ;;
-    "focal")
-        DEFAULT_ROOTFS_URL="https://ci.ubports.com/job/ubuntu-touch-rootfs/job/ubports%252Ffocal/lastSuccessfulBuild/artifact/ubuntu-touch-android9plus-rootfs-$ROOTFS_ARCH.tar.gz"
-        DEFAULT_OTA_CHANNEL="20.04/$ROOTFS_ARCH/android9plus/devel"
-        ;;
-    "24.04-1.x")
-        DEFAULT_ROOTFS_URL="https://ci.ubports.com/job/ubuntu-touch-rootfs/job/ubports%252F24.04-1.x/lastSuccessfulBuild/artifact/ubuntu-touch-android9plus-rootfs-$ROOTFS_ARCH.tar.gz"
-        DEFAULT_OTA_CHANNEL="24.04-1.x/$ROOTFS_ARCH/android9plus/daily"
-        ;;
-    "24.04-2.x")
-        DEFAULT_ROOTFS_URL="https://ci.ubports.com/job/ubuntu-touch-rootfs/job/ubports%252F24.04-2.x/lastSuccessfulBuild/artifact/ubuntu-touch-android9plus-rootfs-$ROOTFS_ARCH.tar.gz"
-        DEFAULT_OTA_CHANNEL="24.04-2.x/$ROOTFS_ARCH/android9plus/daily"
-        ;;
-    "26.04-1.x")
-        DEFAULT_ROOTFS_URL="https://ci.ubports.com/job/ubuntu-touch-rootfs/job/main/lastSuccessfulBuild/artifact/ubuntu-touch-android9plus-rootfs-$ROOTFS_ARCH.tar.gz"
-        DEFAULT_OTA_CHANNEL="26.04-1.x/$ROOTFS_ARCH/android9plus/daily"
-        ;;
     *)
-        # Both overrides need to be specified, if no release is set
+        # Both overrides need to be specified, if custom release is set
         if [ -z "${ROOTFS_URL+x}" ] || [ -z "${OTA_CHANNEL+x}" ]; then
             print_error "Unsupported release: '$RELEASE'"
             exit 1

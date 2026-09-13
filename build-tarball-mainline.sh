@@ -4,7 +4,7 @@ set -ex
 HERE=$(pwd)
 source "${HERE}/deviceinfo"
 
-deviceinfo_krelpin_release=${deviceinfo_krelpin_release:-${deviceinfo_release:-${deviceinfo_ubuntu_touch_release:-rolling}}}
+deviceinfo_krelpin_release=${deviceinfo_krelpin_release:-${deviceinfo_release:-rolling}}
 
 device=$1
 output=$(realpath "$2")
