@@ -14,21 +14,21 @@ name: Build Port
 #
 # jobs:
 #   build:
-#     uses: Krelpin/halium-generic-adaptation-build-tools/.github/workflows/build-port.yml@main
+#     uses: Krelpin/build-tools/.github/workflows/build-port.yml@main
 # ---
 
 on:
   workflow_call:
     inputs:
       adaptation_tools_branch:
-        description: 'Branch of halium-generic-adaptation-build-tools'
+        description: 'Branch of build-tools'
         required: false
         default: 'main'
         type: string
       adaptation_tools_repo:
-        description: 'Repository of halium-generic-adaptation-build-tools'
+        description: 'Repository of build-tools'
         required: false
-        default: 'Krelpin/halium-generic-adaptation-build-tools'
+        default: 'Krelpin/build-tools'
         type: string
       use_build_wrapper:
         description: 'Call the toplevel build.sh wrapper instead of generic one directly'
@@ -38,14 +38,14 @@ on:
   workflow_dispatch:
     inputs:
       adaptation_tools_branch:
-        description: 'Branch of halium-generic-adaptation-build-tools'
+        description: 'Branch of build-tools'
         required: false
         default: 'main'
         type: string
       adaptation_tools_repo:
-        description: 'Repository of halium-generic-adaptation-build-tools'
+        description: 'Repository of build-tools'
         required: false
-        default: 'Krelpin/halium-generic-adaptation-build-tools'
+        default: 'Krelpin/build-tools'
         type: string
       use_build_wrapper:
         description: 'Call the toplevel build.sh wrapper instead of generic one directly'
@@ -73,7 +73,7 @@ jobs:
       - name: Clone adaptation build tools
         run: |
           git clone -b "${{ inputs.adaptation_tools_branch || 'main' }}" \
-            "https://github.com/${{ inputs.adaptation_tools_repo || 'Krelpin/halium-generic-adaptation-build-tools' }}.git" \
+            "https://github.com/${{ inputs.adaptation_tools_repo || 'Krelpin/build-tools' }}.git" \
             build
 
       - name: Build adaptation tarball and images
@@ -113,7 +113,7 @@ jobs:
       - name: Clone adaptation build tools
         run: |
           git clone -b "${{ inputs.adaptation_tools_branch || 'main' }}" \
-            "https://github.com/${{ inputs.adaptation_tools_repo || 'Krelpin/halium-generic-adaptation-build-tools' }}.git" \
+            "https://github.com/${{ inputs.adaptation_tools_repo || 'Krelpin/build-tools' }}.git" \
             build
 
       - name: Prepare fake OTA and generate images

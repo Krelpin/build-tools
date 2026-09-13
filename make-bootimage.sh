@@ -82,7 +82,7 @@ cp -r "$HERE/ramdisk-recovery-overlay"/* "$TMPDOWN/ramdisk-recovery"
 
 # Set values in prop.default based on deviceinfo
 echo "#" >> prop.default
-echo "# added by halium-generic-adaptation-build-tools" >> prop.default
+echo "# added by krelpin build-tools" >> prop.default
 echo "ro.product.brand=$deviceinfo_manufacturer" >> prop.default
 echo "ro.product.device=$deviceinfo_codename" >> prop.default
 echo "ro.product.manufacturer=$deviceinfo_manufacturer" >> prop.default
