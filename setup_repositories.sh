@@ -159,7 +159,7 @@ setup_clang() {
         clone_if_not_existing "https://android.googlesource.com/platform/prebuilts/clang/host/$CLANG_HOST" "$CLANG_BRANCH"
         # shellcheck disable=SC2034
         CLANG_PATH="$TMPDOWN/$CLANG_HOST/clang-$CLANG_REVISION"
-        rm -rf "$TMPDOWN/$CLANG_HOST/.git" "$TMPDOWN/$CLANG_HOST/"!("clang-$CLANG_REVISION")
+        rm -rf "${TMPDOWN:?}/$CLANG_HOST/.git" "${TMPDOWN:?}/$CLANG_HOST/"!("clang-$CLANG_REVISION")
     fi
     drop_python_wrapper "$CLANG_PATH/bin/clang"
 
