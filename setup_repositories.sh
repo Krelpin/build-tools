@@ -188,6 +188,11 @@ setup_clang() {
                 CLANG_BRANCH="$deviceinfo_kernel_clang_arm64_branch"
                 CLANG_REVISION="$deviceinfo_kernel_clang_arm64_revision"
             elif [[ "$deviceinfo_halium_version" = "15" || "$deviceinfo_halium_version" = "16" ]]; then
+                # shellcheck disable=SC2154
+                if [[ -n "$deviceinfo_kernel_clang_branch" || -n "$deviceinfo_kernel_clang_revision" ]]; then
+                    print_warning "Ignoring deviceinfo clang $CLANG_BRANCH/$CLANG_REVISION: it has no native ARM64 build."
+                    print_warning "Set deviceinfo_kernel_clang_arm64_branch and _revision to pin the ARM64 toolchain."
+                fi
                 CLANG_BRANCH="mirror-google-llvm-r614150-release"
                 CLANG_REVISION="r596125"
             else
