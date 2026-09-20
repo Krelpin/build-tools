@@ -85,6 +85,11 @@ deviceinfo_kernel_clang_branch="android12L-gsi"
 # Use a specific revision of prebuilt clang revision (version) instead of default for current Halium version
 deviceinfo_kernel_clang_revision="r416183b"
 
+# Optional native ARM64-host override. Google's ARM64 branches and revisions
+# differ from linux-x86; Halium 15 and 16 have a native default when unset.
+# deviceinfo_kernel_clang_arm64_branch="mirror-google-llvm-r614150-release"
+# deviceinfo_kernel_clang_arm64_revision="r596125"
+
 # URL of a custom Clang toolchain archive (optional)
 # deviceinfo_kernel_clang_toolchain_source="https://example.com/clang-r416183b-linux-arm64.tar.xz"
 

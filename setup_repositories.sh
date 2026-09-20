@@ -44,6 +44,34 @@ fetch_tarball_if_not_existing() {
     fi
 }
 
+setup_build_tools_path() {
+    local source_path="$TMPDOWN/build-tools/path/linux-x86"
+    local target_path="$TMPDOWN/build-tools/path/$BUILD_TOOLS_HOST"
+    local source_link
+    local source_target
+    local target_binary
+
+    if [ "$BUILD_TOOLS_HOST" = "linux-x86" ]; then
+        return
+    fi
+
+    if [ ! -d "$TMPDOWN/build-tools/$BUILD_TOOLS_HOST/bin" ]; then
+        print_error "Android build tools do not provide binaries for this host ($BUILD_TOOLS_HOST)."
+        exit 1
+    fi
+
+    mkdir -p "$target_path"
+    for source_link in "$source_path"/*; do
+        [ -L "$source_link" ] || continue
+        source_target=$(readlink "$source_link")
+        target_binary="$TMPDOWN/build-tools/$BUILD_TOOLS_HOST/bin/${source_target##*/}"
+        if [ -e "$target_binary" ]; then
+            ln -sf "../../$BUILD_TOOLS_HOST/bin/${source_target##*/}" \
+                "$target_path/${source_link##*/}"
+        fi
+    done
+}
+
 drop_python_wrapper() {
     local wrapper_path="$1"
     local real_bin="real-${wrapper_path##*/}"
@@ -56,12 +84,20 @@ drop_python_wrapper() {
 }
 
 setup_gcc() {
+    if [ -n "$deviceinfo_kernel_llvm_compile" ] && $deviceinfo_kernel_llvm_compile; then
+        print_info "Compiling entirely with LLVM, skipping GCC repository setup"
+        return
+    fi
+
     print_header "Setting up GCC repositories"
 
     if [ -n "$deviceinfo_kernel_gcc_toolchain_source" ] && [ -n "$deviceinfo_kernel_gcc_toolchain_dir" ]; then
         fetch_tarball_if_not_existing "$deviceinfo_kernel_gcc_toolchain_source"
         # shellcheck disable=SC2154
         GCC_PATH="$TMPDOWN/$deviceinfo_kernel_gcc_toolchain_dir"
+    elif [ "$BUILD_TOOLS_HOST" != "linux-x86" ]; then
+        print_error "Google's GCC prebuilts require an x86 host. Configure a native custom GCC toolchain."
+        exit 1
     elif [ "$ARCH" = "arm64" ]; then
         clone_if_not_existing "https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9" "pie-gsi"
         # shellcheck disable=SC2034
@@ -141,25 +177,35 @@ setup_clang() {
             esac
         fi
 
-        # Determine host architecture for Clang prebuilts
+        # Google's native ARM64 Clang prebuilts use release branches and
+        # revisions which differ from their linux-x86 counterparts.
         local CLANG_HOST="linux-x86"
-        local HOST_ARCH
-        HOST_ARCH=$(uname -m)
-
-        if [[ "$HOST_ARCH" = "aarch64" || "$HOST_ARCH" = "arm64" ]]; then
-            # Check if branch exists in Google's linux-arm64 prebuilts repository
-            if git ls-remote --exit-code --heads "https://android.googlesource.com/platform/prebuilts/clang/host/linux-arm64" "$CLANG_BRANCH" &>/dev/null; then
-                CLANG_HOST="linux-arm64"
+        local CLANG_REPO_DIR="$CLANG_HOST"
+        if [ "$BUILD_TOOLS_HOST" = "linux_musl-arm64" ]; then
+            CLANG_HOST="linux-arm64"
+            # shellcheck disable=SC2154
+            if [[ -n "$deviceinfo_kernel_clang_arm64_branch" && -n "$deviceinfo_kernel_clang_arm64_revision" ]]; then
+                CLANG_BRANCH="$deviceinfo_kernel_clang_arm64_branch"
+                CLANG_REVISION="$deviceinfo_kernel_clang_arm64_revision"
+            elif [[ "$deviceinfo_halium_version" = "15" || "$deviceinfo_halium_version" = "16" ]]; then
+                CLANG_BRANCH="mirror-google-llvm-r614150-release"
+                CLANG_REVISION="r596125"
             else
-                print_warning "Google does not provide arm64 prebuilts for branch '$CLANG_BRANCH'."
-                print_warning "Falling back to linux-x86 prebuilts (requires qemu-user / binfmt on ARM64 host)."
+                print_error "Google does not provide a default native ARM64 Clang for Halium $deviceinfo_halium_version."
+                print_error "Configure deviceinfo_kernel_clang_toolchain_source or the ARM64 branch/revision variables."
+                exit 1
             fi
+            CLANG_REPO_DIR="linux-arm64-$CLANG_REVISION"
         fi
 
-        clone_if_not_existing "https://android.googlesource.com/platform/prebuilts/clang/host/$CLANG_HOST" "$CLANG_BRANCH"
+        clone_if_not_existing "https://android.googlesource.com/platform/prebuilts/clang/host/$CLANG_HOST" "$CLANG_BRANCH" "$CLANG_REPO_DIR"
         # shellcheck disable=SC2034
-        CLANG_PATH="$TMPDOWN/$CLANG_HOST/clang-$CLANG_REVISION"
-        rm -rf "${TMPDOWN:?}/$CLANG_HOST/.git" "${TMPDOWN:?}/$CLANG_HOST/"!("clang-$CLANG_REVISION")
+        CLANG_PATH="$TMPDOWN/$CLANG_REPO_DIR/clang-$CLANG_REVISION"
+        if [ ! -x "$CLANG_PATH/bin/clang" ]; then
+            print_error "Clang revision '$CLANG_REVISION' is missing from '$CLANG_BRANCH' for $CLANG_HOST."
+            exit 1
+        fi
+        rm -rf "${TMPDOWN:?}/$CLANG_REPO_DIR/.git" "${TMPDOWN:?}/$CLANG_REPO_DIR/"!("clang-$CLANG_REVISION")
     fi
     drop_python_wrapper "$CLANG_PATH/bin/clang"
 
@@ -183,13 +229,20 @@ setup_tooling() {
     clone_if_not_existing "https://android.googlesource.com/platform/external/avb" "android13-gsi"
 
     if [ -n "$deviceinfo_kernel_use_dtc_ext" ] && $deviceinfo_kernel_use_dtc_ext; then
-        if [ -f "dtc_ext" ]; then
+        if [ "$BUILD_TOOLS_HOST" = "linux_musl-arm64" ]; then
+            if ! DTC_EXT=$(command -v dtc); then
+                print_error "A native dtc executable is required on ARM64 build hosts."
+                exit 1
+            fi
+        elif [ -f "dtc_ext" ]; then
             print_info "dtc_ext - already exists, skipping download"
         else
             curl --location https://android.googlesource.com/platform/prebuilts/misc/+/refs/heads/android10-gsi/linux-x86/dtc/dtc?format=TEXT | base64 --decode > dtc_ext
+            chmod +x dtc_ext
+            DTC_EXT="$TMPDOWN/dtc_ext"
         fi
-        chmod +x dtc_ext
-        export DTC_EXT="$TMPDOWN/dtc_ext"
+        : "${DTC_EXT:=$TMPDOWN/dtc_ext}"
+        export DTC_EXT
     fi
 
     if [ -n "$deviceinfo_kernel_llvm_compile" ] && $deviceinfo_kernel_llvm_compile; then
@@ -210,7 +263,10 @@ setup_tooling() {
 
         if [ -n "$BUILD_TOOLS_BRANCH" ]; then
             clone_if_not_existing "https://android.googlesource.com/platform/prebuilts/build-tools" "$BUILD_TOOLS_BRANCH"
-            clone_if_not_existing "https://android.googlesource.com/kernel/prebuilts/build-tools" "$BUILD_TOOLS_BRANCH" "kernel-build-tools"
+            setup_build_tools_path
+            if [ "$BUILD_TOOLS_HOST" = "linux-x86" ]; then
+                clone_if_not_existing "https://android.googlesource.com/kernel/prebuilts/build-tools" "$BUILD_TOOLS_BRANCH" "kernel-build-tools"
+            fi
         fi
     fi
 

@@ -47,6 +47,20 @@ mkdir -p "${TMP}/system" "${TMP}/partitions"
 
 source "${HERE}/deviceinfo"
 source "$SCRIPT/common_functions.sh"
+
+case "$(uname -m)" in
+    aarch64|arm64)
+        BUILD_TOOLS_HOST="linux_musl-arm64"
+        ;;
+    x86_64|amd64)
+        BUILD_TOOLS_HOST="linux-x86"
+        ;;
+    *)
+        print_error "Unsupported build host architecture: $(uname -m)"
+        exit 1
+        ;;
+esac
+
 source "$SCRIPT/setup_repositories.sh" "${TMPDOWN}"
 if [ "$ONLY_CLONE" = "true" ]; then
     exit 0
@@ -60,27 +74,39 @@ if $deviceinfo_kernel_clang_compile; then
     if [ -n "$deviceinfo_kernel_llvm_compile" ] && $deviceinfo_kernel_llvm_compile; then
         # Restrict available binaries in PATH to make builds less susceptible to host differences
         ALLOWED_HOST_TOOLS="bash git perl sh sync tar yes"
+        if [ "$BUILD_TOOLS_HOST" = "linux_musl-arm64" ]; then
+            # kernel/prebuilts/build-tools does not provide ARM64 binaries.
+            ALLOWED_HOST_TOOLS+=" depmod dtc lz4 pahole pkg-config rsync"
+        fi
 
         HOST_TOOLS=${TMPDOWN}/host_tools
-        rm -rf ${HOST_TOOLS}
-        mkdir -p ${HOST_TOOLS}
+        rm -rf "${HOST_TOOLS}"
+        mkdir -p "${HOST_TOOLS}"
         for tool in ${ALLOWED_HOST_TOOLS}
         do
-            ln -sf $(which $tool) ${HOST_TOOLS}
+            if tool_path=$(command -v "$tool"); then
+                ln -sf "$tool_path" "${HOST_TOOLS}/${tool}"
+            else
+                print_warning "Host tool '$tool' is not installed; the kernel build may require it."
+            fi
         done
 
-        BUILD_TOOLS_BIN="${TMPDOWN}/build-tools/linux-x86/bin"
-        BUILD_TOOLS_PATH="${TMPDOWN}/build-tools/path/linux-x86"
+        BUILD_TOOLS_BIN="${TMPDOWN}/build-tools/${BUILD_TOOLS_HOST}/bin"
+        BUILD_TOOLS_PATH="${TMPDOWN}/build-tools/path/${BUILD_TOOLS_HOST}"
 
         EXTRA_TOYBOX_TOOLS="dd expr nproc tr"
         for tool in ${EXTRA_TOYBOX_TOOLS}
         do
-            ln -sf ../../linux-x86/bin/toybox "${BUILD_TOOLS_PATH}/${tool}"
+            ln -sf "../../${BUILD_TOOLS_HOST}/bin/toybox" "${BUILD_TOOLS_PATH}/${tool}"
         done
 
-        KERNEL_BUILD_TOOLS_BIN="${TMPDOWN}/kernel-build-tools/linux-x86/bin"
+        RESTRICTED_PATH="$CLANG_PATH/bin:${BUILD_TOOLS_BIN}:${BUILD_TOOLS_PATH}:${HOST_TOOLS}"
+        if [ "$BUILD_TOOLS_HOST" = "linux-x86" ]; then
+            KERNEL_BUILD_TOOLS_BIN="${TMPDOWN}/kernel-build-tools/linux-x86/bin"
+            RESTRICTED_PATH="${RESTRICTED_PATH}:${KERNEL_BUILD_TOOLS_BIN}"
+        fi
 
-        PATH="$CLANG_PATH/bin:${BUILD_TOOLS_BIN}:${BUILD_TOOLS_PATH}:${KERNEL_BUILD_TOOLS_BIN}:${HOST_TOOLS}" \
+        PATH="$RESTRICTED_PATH" \
             "$SCRIPT/build-kernel.sh" "${TMPDOWN}" "${TMP}/system" "${MENUCONFIG}"
     else
         CC=clang \
