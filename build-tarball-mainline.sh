@@ -21,11 +21,12 @@ elif [[ -d "$dir/system/opt/halium-overlay" && -d "$dir/system/usr/share/halium-
     exit 1
 fi
 
-if [ -d overlay ] && [ -n "$(ls -A overlay)" ]; then
-    cp -av overlay/* "${dir}/"
-else
-    echo "No overlay/ contents in the port tree, skipping overlay copy"
+if [ ! -d overlay ] || [ -z "$(ls -A overlay)" ]; then
+    echo "overlay/ is missing or empty, every port tree must provide one!"
+    exit 1
 fi
+
+cp -av overlay/* "${dir}/"
 
 if [ -e "${HERE}/${deviceinfo_krelpin_release}-overlay" ]; then
     cp -a ${HERE}/${deviceinfo_krelpin_release}-overlay/system/* $dir/system/
