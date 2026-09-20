@@ -166,8 +166,8 @@ setup_clang() {
                     CLANG_REVISION="r487747c"
                     ;;
                 15|16)
-                    CLANG_BRANCH="main-kernel-build-2024"
-                    CLANG_REVISION="r510928"
+                    CLANG_BRANCH="mirror-google-llvm-r614150-release"
+                    CLANG_REVISION="r596125"
                     ;;
 
                 *)
@@ -177,40 +177,21 @@ setup_clang() {
             esac
         fi
 
-        # Google's native ARM64 Clang prebuilts use release branches and
-        # revisions which differ from their linux-x86 counterparts.
+        # The linux-x86 and linux-arm64 prebuilts carry the same branches and
+        # revisions, so only the repository to clone differs per build host.
         local CLANG_HOST="linux-x86"
-        local CLANG_REPO_DIR="$CLANG_HOST"
         if [ "$BUILD_TOOLS_HOST" = "linux_musl-arm64" ]; then
             CLANG_HOST="linux-arm64"
-            # shellcheck disable=SC2154
-            if [[ -n "$deviceinfo_kernel_clang_arm64_branch" && -n "$deviceinfo_kernel_clang_arm64_revision" ]]; then
-                CLANG_BRANCH="$deviceinfo_kernel_clang_arm64_branch"
-                CLANG_REVISION="$deviceinfo_kernel_clang_arm64_revision"
-            elif [[ "$deviceinfo_halium_version" = "15" || "$deviceinfo_halium_version" = "16" ]]; then
-                # shellcheck disable=SC2154
-                if [[ -n "$deviceinfo_kernel_clang_branch" || -n "$deviceinfo_kernel_clang_revision" ]]; then
-                    print_warning "Ignoring deviceinfo clang $CLANG_BRANCH/$CLANG_REVISION: it has no native ARM64 build."
-                    print_warning "Set deviceinfo_kernel_clang_arm64_branch and _revision to pin the ARM64 toolchain."
-                fi
-                CLANG_BRANCH="mirror-google-llvm-r614150-release"
-                CLANG_REVISION="r596125"
-            else
-                print_error "Google does not provide a default native ARM64 Clang for Halium $deviceinfo_halium_version."
-                print_error "Configure deviceinfo_kernel_clang_toolchain_source or the ARM64 branch/revision variables."
-                exit 1
-            fi
-            CLANG_REPO_DIR="linux-arm64-$CLANG_REVISION"
         fi
 
-        clone_if_not_existing "https://android.googlesource.com/platform/prebuilts/clang/host/$CLANG_HOST" "$CLANG_BRANCH" "$CLANG_REPO_DIR"
+        clone_if_not_existing "https://android.googlesource.com/platform/prebuilts/clang/host/$CLANG_HOST" "$CLANG_BRANCH" "$CLANG_HOST"
         # shellcheck disable=SC2034
-        CLANG_PATH="$TMPDOWN/$CLANG_REPO_DIR/clang-$CLANG_REVISION"
+        CLANG_PATH="$TMPDOWN/$CLANG_HOST/clang-$CLANG_REVISION"
         if [ ! -x "$CLANG_PATH/bin/clang" ]; then
             print_error "Clang revision '$CLANG_REVISION' is missing from '$CLANG_BRANCH' for $CLANG_HOST."
             exit 1
         fi
-        rm -rf "${TMPDOWN:?}/$CLANG_REPO_DIR/.git" "${TMPDOWN:?}/$CLANG_REPO_DIR/"!("clang-$CLANG_REVISION")
+        rm -rf "${TMPDOWN:?}/$CLANG_HOST/.git" "${TMPDOWN:?}/$CLANG_HOST/"!("clang-$CLANG_REVISION")
     fi
     drop_python_wrapper "$CLANG_PATH/bin/clang"
 
@@ -286,6 +267,26 @@ setup_tooling() {
     clone_if_not_existing "https://github.com/LineageOS/android_system_tools_mkbootimg" "lineage-20.0"
 }
 
+apply_kernel_patches() {
+    local kernel_dir="$1"
+    local patch
+
+    [ -d "$HERE/patches" ] || return
+
+    print_header "Applying patches to the kernel source"
+
+    for patch in "$HERE"/patches/*.patch; do
+        [ -e "$patch" ] || continue
+        # The kernel tree is kept between builds, so skip what is already in.
+        if git -C "$kernel_dir" apply --reverse --check "$patch" 2>/dev/null; then
+            print_info "${patch##*/} - already applied, skipping"
+        else
+            print_message "Applying ${patch##*/}"
+            git -C "$kernel_dir" apply "$patch"
+        fi
+    done
+}
+
 setup_kernel() {
     print_header "Setting up kernel repositories"
 
@@ -294,6 +295,8 @@ setup_kernel() {
     KERNEL_DIR="${KERNEL_DIR%.*}"
     # shellcheck disable=SC2154
     clone_if_not_existing "$deviceinfo_kernel_source" "$deviceinfo_kernel_source_branch" "$KERNEL_DIR"
+
+    apply_kernel_patches "$KERNEL_DIR"
 }
 
 setup_ramdisk() {
