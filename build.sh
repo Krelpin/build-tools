@@ -106,6 +106,8 @@ if $deviceinfo_kernel_clang_compile; then
             RESTRICTED_PATH="${RESTRICTED_PATH}:${KERNEL_BUILD_TOOLS_BIN}"
         fi
 
+        BISON_PKGDATADIR="${TMPDOWN}/build-tools/common/bison" \
+        M4="${BUILD_TOOLS_BIN}/m4" \
         PATH="$RESTRICTED_PATH" \
             "$SCRIPT/build-kernel.sh" "${TMPDOWN}" "${TMP}/system" "${MENUCONFIG}"
     else
