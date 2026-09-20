@@ -58,7 +58,7 @@ deviceinfo_kernel_source="https://github.com/Krelpin/example_kernel_source.git"
 # Branch of repo
 deviceinfo_kernel_source_branch="main"
 
-# Patches in the port tree's patches/ directory are applied to the kernel
+# Patches in the port tree's kernel-patches/ directory are applied to the kernel
 # source after it is cloned, in filename order. They are plain git patches,
 # and ones already applied to a reused kernel tree are skipped.
 
@@ -68,7 +68,7 @@ deviceinfo_kernel_source_branch="main"
 # are merged in order, e.g.
 #   deviceinfo_kernel_defconfig="gki_defconfig halium.config mydevice.config"
 # A kernel cloned fresh on every build has no fragments of its own; add them
-# from a patch in the port tree's patches/ directory.
+# from a patch in the port tree's kernel-patches/ directory.
 deviceinfo_kernel_defconfig="halium_yumi_defconfig"
 
 # Kernel cmdline options, these are very device specific

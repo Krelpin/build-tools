@@ -271,11 +271,11 @@ apply_kernel_patches() {
     local kernel_dir="$1"
     local patch
 
-    [ -d "$HERE/patches" ] || return
+    [ -d "$HERE/kernel-patches" ] || return
 
     print_header "Applying patches to the kernel source"
 
-    for patch in "$HERE"/patches/*.patch; do
+    for patch in "$HERE"/kernel-patches/*.patch; do
         [ -e "$patch" ] || continue
         # The kernel tree is kept between builds, so skip what is already in.
         if git -C "$kernel_dir" apply --reverse --check "$patch" 2>/dev/null; then
