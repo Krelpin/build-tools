@@ -58,7 +58,17 @@ deviceinfo_kernel_source="https://github.com/Krelpin/example_kernel_source.git"
 # Branch of repo
 deviceinfo_kernel_source_branch="main"
 
+# Patches in the port tree's patches/ directory are applied to the kernel
+# source after it is cloned, in filename order. They are plain git patches,
+# and ones already applied to a reused kernel tree are skipped.
+
 # Defconfig to use, located within the kernel repo (usually a file within arch/*/configs/)
+#
+# Config fragments living next to it can be listed after the defconfig and
+# are merged in order, e.g.
+#   deviceinfo_kernel_defconfig="gki_defconfig halium.config mydevice.config"
+# A kernel cloned fresh on every build has no fragments of its own; add them
+# from a patch in the port tree's patches/ directory.
 deviceinfo_kernel_defconfig="halium_yumi_defconfig"
 
 # Kernel cmdline options, these are very device specific
@@ -84,11 +94,6 @@ deviceinfo_kernel_clang_branch="android12L-gsi"
 
 # Use a specific revision of prebuilt clang revision (version) instead of default for current Halium version
 deviceinfo_kernel_clang_revision="r416183b"
-
-# Optional native ARM64-host override. Google's ARM64 branches and revisions
-# differ from linux-x86; Halium 15 and 16 have a native default when unset.
-# deviceinfo_kernel_clang_arm64_branch="mirror-google-llvm-r614150-release"
-# deviceinfo_kernel_clang_arm64_revision="r596125"
 
 # URL of a custom Clang toolchain archive (optional)
 # deviceinfo_kernel_clang_toolchain_source="https://example.com/clang-r416183b-linux-arm64.tar.xz"
