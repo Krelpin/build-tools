@@ -184,11 +184,13 @@ do
                     rm -f "$OUT/rootfs.img"
                     truncate -s "${deviceinfo_system_partition_size:-3584M}" "$OUT/rootfs.img"
                     mkfs.ext4 -F "$OUT/rootfs.img"
-                    # Disable orphan_file as needed when host e2fsprogs 1.47+ would create something
-                    # incompatible with e2fsck 1.45 of UBports recovery breaking 20.04 OTA updates
-		    if dumpe2fs -h "$OUT/rootfs.img" | grep -q 'orphan_file'; then
-                        tune2fs -O '^orphan_file' "$OUT/rootfs.img"
-                    fi
+                    # The recovery and halium initrd carry an e2fsck that predates
+                    # these features and corrupts a filesystem that uses them
+                    for _feat in orphan_file metadata_csum_seed; do
+                        if dumpe2fs -h "$OUT/rootfs.img" 2>/dev/null | grep -q "$_feat"; then
+                            tune2fs -O "^$_feat" "$OUT/rootfs.img"
+                        fi
+                    done
                 ;;
 
                 *)

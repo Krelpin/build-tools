@@ -4,6 +4,8 @@ if [[ $(id -u) -ne 0 ]] ; then
     exec fakeroot -- $0 $*
 fi
 
+set -e
+
 HERE=$(pwd)
 SCRIPT="$(dirname "$(realpath "$0")")"/build
 if [ ! -d "$SCRIPT" ]; then
@@ -148,6 +150,11 @@ if [ -d system/etc/default ]; then
 # verification ("secure ADBD") by default, to aid in debugging.
 ADBD_SECURE=0
 EOF
+fi
+
+if [ -z "$(ls -A system)" ]; then
+    print_error "Extracting $file produced nothing; the rootfs would be empty."
+    exit 1
 fi
 
 print_header "Repacking rootfs..."
